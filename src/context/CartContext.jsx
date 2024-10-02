@@ -1,9 +1,18 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+import axios from "axios"
 
 export const CartContext = createContext();
+const API_KEY = import.meta.env.VITE_EXCHANGE_KEY
+console.log(API_KEY);
+
 
 export default function CartContextProvider({ children }) {
   const [cart, setCart] = useState([]);
+  const [exchangeRates,setExchangeRates] = useState([])
+  const [currencyType,setCurrencytype] = useState("INR")
+  const [currentCurrencyPrice,setCurrentCurrencyPrice] = useState("")
+  
+  
 
   function addToCart(item) {
     setCart((prev) => [...prev, { ...item, quantity: 1 }]);
@@ -13,6 +22,16 @@ export default function CartContextProvider({ children }) {
     setCart(cart.filter((item) => item.id !== id));
   }
 
+
+  useEffect(()=>{
+     async  function getExchangeRates(){
+          const response = await axios.get(`https://api.exchangeratesapi.io/v1/latest?access_key=${API_KEY}`)
+          setExchangeRates(response.data);
+          
+          setCurrentCurrencyPrice(response.data.rates["INR"])
+      }
+      getExchangeRates()
+  },[])
  
 
    const updateQuantity = (id, type) => {
@@ -31,7 +50,7 @@ export default function CartContextProvider({ children }) {
             });
       })}
   return (
-    <CartContext.Provider value={{ cart, addToCart, deleteFormCart,updateQuantity }}>
+    <CartContext.Provider value={{ cart, setCart,addToCart, deleteFormCart,updateQuantity,exchangeRates,currencyType,setCurrencytype,currentCurrencyPrice,setCurrentCurrencyPrice }}>
       {children}
     </CartContext.Provider>
   );
